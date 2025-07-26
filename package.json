@@ -1,13 +1,16 @@
 {
   "name": "lucky-server",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
+  "private": true,
+  "version": "0.0.0",
+  "author": "talkohavy@gmail.com",
   "license": "ISC",
-  "description": "",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "scripts": {},
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "restricted"
+  },
   "devDependencies": {
     "esbuild": "^0.25.8"
   }
