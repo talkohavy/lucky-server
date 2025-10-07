@@ -6,6 +6,8 @@
 
 A lightweight, modular server framework for Node.js applications built on top of Express. Lucky Server provides a clean, organized way to structure your server-side applications using a module-based architecture.
 
+<br/>
+
 ## 🚀 Features
 
 - **Modular Architecture**: Organize your application into discrete, reusable modules
@@ -14,6 +16,8 @@ A lightweight, modular server framework for Node.js applications built on top of
 - **Socket.IO Support**: Built-in support for WebSocket event handlers
 - **TypeScript First**: Fully typed interfaces for better development experience
 - **Lightweight**: Minimal overhead while providing powerful organization patterns
+
+<br/>
 
 ## 📦 Installation
 
@@ -26,6 +30,8 @@ or with pnpm:
 ```bash
 pnpm add lucky-server
 ```
+
+<br/>
 
 ## 🏗️ Core Concepts
 
@@ -44,6 +50,8 @@ An interface for HTTP route controllers. Controllers handle Express.js routes an
 ### `EventHandlerFactory`
 
 An interface for Socket.IO event handlers. Event handlers manage WebSocket connections and real-time communication.
+
+<br/>
 
 ## 🛠️ Quick Start
 
@@ -109,9 +117,11 @@ async function startServer(){
 }
 ```
 
+<br/>
+
 ## 📚 API Reference
 
-### ModuleRegistry
+### `ModuleRegistry`
 
 ```typescript
 class ModuleRegistry {
@@ -126,7 +136,7 @@ class ModuleRegistry {
 - `attachAllControllers(app)`: Attaches all registered module controllers to the Express application
 - `attachAllEventHandlers(io)`: Attaches all registered module event handlers to the Socket.IO instance
 
-### ModuleFactory Interface
+### `ModuleFactory` Interface
 
 ```typescript
 interface ModuleFactory {
@@ -135,7 +145,7 @@ interface ModuleFactory {
 }
 ```
 
-### ControllerFactory Interface
+### `ControllerFactory` Interface
 
 ```typescript
 interface ControllerFactory {
@@ -143,13 +153,15 @@ interface ControllerFactory {
 }
 ```
 
-### EventHandlerFactory Interface
+### `EventHandlerFactory` Interface
 
 ```typescript
 interface EventHandlerFactory {
   attachEventHandlers(): void;
 }
 ```
+
+<br/>
 
 ## 🏛️ Architecture Example
 
@@ -172,9 +184,13 @@ src/
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+<br/>
+
 ## 📄 License
 
 MIT
+
+<br/>
 
 ## 🔗 Links
 
