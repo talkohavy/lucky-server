@@ -1,5 +1,11 @@
 # lucky-server
 
+## 1.0.2
+
+### Patch Changes
+
+- BUGFIX: exports was defined wrongfully in the package.json. Fixed now.
+
 ## 1.0.1
 
 ### Patch Changes
