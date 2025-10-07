@@ -1,5 +1,9 @@
 # Lucky Server
 
+<p align="center">
+  <img src="https://i.ibb.co/b5DKqrrq/lucky-server-min.png" width="250" alt="lvlup logo" />
+</p>
+
 A lightweight, modular server framework for Node.js applications built on top of Express. Lucky Server provides a clean, organized way to structure your server-side applications using a module-based architecture.
 
 ## 🚀 Features
