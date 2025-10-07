@@ -1,5 +1,11 @@
 # lucky-server
 
+## 1.0.1
+
+### Patch Changes
+
+- Added a logo to the package.
+
 ## 1.0.0
 
 ### Major Changes
