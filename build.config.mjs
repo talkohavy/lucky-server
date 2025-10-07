@@ -23,9 +23,11 @@ const mode = process.env.NODE_ENV;
 const isProd = mode === 'production';
 const outDirName = 'dist';
 const COLORS = {
-  green: '[32m',
-  blue: '[34m',
-  stop: '[39m',
+  green: '\x1b[32m',
+  blue: '\x1b[34m',
+  yellow: '\x1b[33m',
+  magenta: '\x1b[35m',
+  stop: '\x1b[39m',
 };
 
 buildPackageConfig();
