@@ -1,11 +1,11 @@
 {
   "name": "lucky-server",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "talkohavy@gmail.com",
-  "license": "ISC",
-  "main": "dist/main.js",
-  "types": "dist/main.d.ts",
+  "license": "MIT",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "clean": "rm -rf node_modules",
     "lint": "eslint",
@@ -18,16 +18,24 @@
     "registry": "https://registry.npmjs.org/",
     "access": "restricted"
   },
+  "peerDependencies": {
+    "express": "^5.1.0"
+  },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@types/express": "^5.0.3",
     "@types/node": "^24.1.0",
-    "esbuild": "^0.25.8",
     "eslint": "^9.32.0",
     "eslint-plugin-perfectionist": "^4.15.0",
     "eslint-plugin-react-compiler": "19.1.0-rc.2",
+    "express": "^5.1.0",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
     "prettier": "^3.6.2",
+    "rollup": "^4.52.4",
+    "tslib": "^2.8.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0"
   }
