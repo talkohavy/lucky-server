@@ -1,5 +1,11 @@
 # lucky-server
 
+## 1.0.3
+
+### Patch Changes
+
+- Added a ConnectionFactory interface. Connections should implement this interface.
+
 ## 1.0.2
 
 ### Patch Changes
