@@ -1,5 +1,11 @@
 # lucky-server
 
+## 2.0.0
+
+### Major Changes
+
+- Created AppFactory - the main class of the package.
+
 ## 1.0.3
 
 ### Patch Changes
