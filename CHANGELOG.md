@@ -1,5 +1,11 @@
 # lucky-server
 
+## 2.0.1
+
+### Patch Changes
+
+- Updated readme with last major changes features.
+
 ## 2.0.0
 
 ### Major Changes
