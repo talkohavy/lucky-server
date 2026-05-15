@@ -2,7 +2,7 @@
   "name": "lucky-server",
   "description": "A modular server framework built on Express, designed for flexibility and scalability.",
   "private": true,
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "talkohavy@gmail.com",
   "license": "MIT",
   "keywords": ["lucky", "server", "express", "modules"],
