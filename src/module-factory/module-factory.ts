@@ -1,3 +1,3 @@
 export interface ModuleFactory {
-  init(): Promise<void>;
+  init(): Promise<void> | void;
 }
