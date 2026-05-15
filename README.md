@@ -11,7 +11,9 @@ A lightweight, modular server framework for Node.js applications built on top of
 ## 🚀 Features
 
 - **Modular Architecture**: Organize your application into discrete, reusable modules
-- **Plugin System**: Register plugins to extend your app's functionality
+- **Async module lifecycle**: Each module exposes `init()` so setup can await I/O before routes and handlers run
+- **Middleware registration**: Dedicated `registerMiddleware` step between plugins and modules
+- **Plugin System**: Register plugins to extend your app's functionality (sync or async)
 - **Express Integration**: Built on top of Express.js for familiar, robust HTTP handling
 - **Socket.IO Support**: Built-in support for WebSocket event handlers
 - **Connection Management**: Interface for managing database and external service connections
@@ -38,7 +40,9 @@ pnpm add lucky-server
 
 ### `AppFactory`
 
-The central orchestrator that manages your Express application. It handles module registration, plugin registration, and error handling setup.
+The central orchestrator that manages your Express application. It handles plugin registration, middleware registration, module registration (including async `init()` on each module), and error handling setup.
+
+**Recommended registration order:** `registerPlugins` → `registerMiddleware` → `registerModules` → path-not-found and error handlers.
 
 ### `ControllerFactory`
 
@@ -51,6 +55,14 @@ An interface for Socket.IO event handlers. Event handlers manage WebSocket conne
 ### `ConnectionFactory`
 
 An interface for managing connections to external services (databases, message queues, etc.). Provides a standardized way to connect, disconnect, and ensure connection status.
+
+### `ModuleFactory`
+
+An interface for application modules used with `AppFactory.registerModules`. Implement `init()` to perform async startup work; `AppFactory` awaits it before the module is considered registered.
+
+### `MiddlewareFactory`
+
+A small interface (`use()`) for typing middleware-style building blocks. Express middleware is still registered on the app inside plugin or middleware functions as usual.
 
 <br/>
 
@@ -65,21 +77,25 @@ import { AppFactory } from 'lucky-server';
 const app = express();
 
 // Create the AppFactory with your Express app
-// The second argument is an optional object to extend your app
+// The second argument is an optional object merged onto your app (e.g. { modules: {} })
 const appFactory = new AppFactory(app, { modules: {} });
 ```
 
+Keep a reference to `app` in your own scope when you need the Express instance; it is not exposed as a public property on `AppFactory`.
+
 ### 2. Create a Module
 
-Modules are classes that receive the app instance in their constructor:
+Modules are classes that receive the app instance in their constructor and perform async setup in `init()`:
 
 ```typescript
 // modules/UserModule.ts
 import type { Application } from 'express';
+import type { ModuleFactory } from 'lucky-server';
 
-export class UserModule {
-  constructor(private app: Application) {
-    // Initialize your module
+export class UserModule implements ModuleFactory {
+  constructor(private app: Application) {}
+
+  async init(): Promise<void> {
     this.registerRoutes();
   }
 
@@ -96,7 +112,9 @@ export class UserModule {
 }
 ```
 
-### 3. Register Modules
+### 3. Register plugins, middleware, and modules
+
+Call registration in order: plugins first, then middleware, then modules. Each step supports async functions. Array entries that are `undefined`, `null`, or `false` are skipped (useful for conditional registration).
 
 ```typescript
 import express from 'express';
@@ -109,8 +127,17 @@ async function startServer() {
 
   const appFactory = new AppFactory(app, { modules: {} });
 
-  // Register all your modules
-  appFactory.registerModules([
+  await appFactory.registerPlugins([
+    // e.g. cors, database connection
+  ]);
+
+  await appFactory.registerMiddleware([
+    (application) => {
+      application.use(express.json());
+    },
+  ]);
+
+  await appFactory.registerModules([
     UserModule,
     AuthModule,
     // Add more modules as needed
@@ -148,14 +175,9 @@ async function startServer() {
   const app = express();
   const appFactory = new AppFactory(app, { modules: {} });
 
-  // Register plugins (supports both sync and async)
-  await appFactory.registerPlugins([
-    corsPlugin,
-    databasePlugin,
-  ]);
-
-  // Register modules after plugins
-  appFactory.registerModules([UserModule]);
+  await appFactory.registerPlugins([corsPlugin, databasePlugin]);
+  await appFactory.registerMiddleware([(application) => application.use(express.json())]);
+  await appFactory.registerModules([UserModule]);
 
   app.listen(3000);
 }
@@ -179,7 +201,7 @@ const notFoundHandler = (app: express.Application) => {
   });
 };
 
-// Register after all modules and plugins
+// Register after all modules, plugins, and middleware
 appFactory.registerPathNotFoundHandler(notFoundHandler);
 appFactory.registerErrorHandler(errorHandler);
 ```
@@ -192,22 +214,20 @@ appFactory.registerErrorHandler(errorHandler);
 
 ```typescript
 class AppFactory {
-  constructor(app: any, optimizedApp?: object)
-  registerModules(modules: ModuleConstructor[]): void
-  registerPlugins(plugins: (PluginFn | PluginAsyncFn)[]): Promise<void>
-  registerErrorHandler(errorHandler: PluginFn | PluginAsyncFn): void
-  registerPathNotFoundHandler(pathNotFoundHandler: PluginFn): void
+  constructor(app: any, optimizedApp?: object);
+  registerPlugins(plugins: (PluginFn | PluginAsyncFn | NullishFalsy)[]): Promise<void>;
+  registerMiddleware(middlewares: (MiddlewareFn | MiddlewareAsyncFn | NullishFalsy)[]): Promise<void>;
+  registerModules(modules: (ModuleConstructor | NullishFalsy)[]): Promise<void>;
+  registerErrorHandler(errorHandler: PluginFn | PluginAsyncFn): void;
+  registerPathNotFoundHandler(pathNotFoundHandler: PluginFn): void;
 }
 ```
 
-**Properties:**
-
-- `app`: The Express application instance (readonly)
-
 **Methods:**
 
-- `registerModules(modules)`: Instantiates and registers all provided module classes. Each module receives the app in its constructor and is stored in `app.modules[ModuleName]`.
-- `registerPlugins(plugins)`: Executes all provided plugin functions (supports async). Plugins receive the app instance.
+- `registerPlugins(plugins)`: Runs each plugin with the app instance (awaited in order). Intended to run before `registerMiddleware`.
+- `registerMiddleware(middlewares)`: Runs each middleware callback with the app (awaited in order). Intended after plugins and before `registerModules`.
+- `registerModules(modules)`: Instantiates each module, awaits `module.init()`, then registers it on `app.modules[ModuleName]`.
 - `registerErrorHandler(handler)`: Registers an error handling middleware.
 - `registerPathNotFoundHandler(handler)`: Registers a 404 handler for unmatched routes.
 
@@ -245,12 +265,31 @@ interface ConnectionFactory {
 - `getClient()`: Returns the underlying client instance
 - `ensureConnected()`: Throws an error if not connected. Best practice is to call this in the constructor of services/repositories that use the connection.
 
+### `ModuleFactory` Interface
+
+```typescript
+interface ModuleFactory {
+  init(): Promise<void>;
+}
+```
+
+### `MiddlewareFactory` Interface
+
+```typescript
+interface MiddlewareFactory {
+  use(): void;
+}
+```
+
 ### Types
 
 ```typescript
+type NullishFalsy = undefined | null | false;
 type ModuleConstructor = new (app: any) => any;
 type PluginFn = (app: any) => void;
 type PluginAsyncFn = (app: any) => Promise<void>;
+type MiddlewareFn = (app: any) => void;
+type MiddlewareAsyncFn = (app: any) => Promise<void>;
 ```
 
 <br/>
@@ -274,6 +313,8 @@ src/
 ├── plugins/
 │   ├── corsPlugin.ts
 │   └── loggerPlugin.ts
+├── middleware/
+│   └── bodyParserMiddleware.ts
 └── eventHandlers/
     └── ChatEventHandler.ts
 ```
@@ -292,11 +333,20 @@ If you're upgrading from v1.x, here are the key changes:
 | `attachAllControllers(app)`  | `registerModules(modules)`                      |
 | `attachAllEventHandlers(io)` | Handle in module constructor or via plugins     |
 
+### AppFactory lifecycle (current)
+
+- **`registerModules` is async** and awaits `init()` on every module; use `await appFactory.registerModules([...])`.
+- **Modules must implement `init()`** (see `ModuleFactory`); put route and handler registration there or call helpers from `init`.
+- **Use `registerMiddleware`** for Express `app.use` steps that should run after plugins and before modules.
+- **Conditional entries**: plugin, middleware, and module arrays may include `undefined`, `null`, or `false`; those entries are ignored.
+
 <br/>
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+This repository includes a [Biome](https://biomejs.dev/) configuration (`biome.json`) for formatting and linting consistency.
 
 <br/>
 

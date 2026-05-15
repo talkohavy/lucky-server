@@ -1,35 +1,84 @@
-import type { ModuleConstructor, PluginAsyncFn, PluginFn } from './types';
+import type {
+  MiddlewareAsyncFn,
+  MiddlewareFn,
+  ModuleConstructor,
+  NullishFalsy,
+  PluginAsyncFn,
+  PluginFn,
+} from './types';
 
 export class AppFactory {
   private registeredModules: any[] = [];
   private registeredPlugins: PluginFn[] = [];
+  private registeredMiddleware: PluginFn[] = [];
 
   constructor(
-    public readonly app: any,
+    private readonly app: any,
     optimizedApp = {},
   ) {
     Object.assign(this.app, optimizedApp);
   }
 
-  registerModules(modules: ModuleConstructor[]): void {
-    modules.forEach((Module) => {
+  /**
+   * Should be called after middlewares are registered.
+   *
+   * @param modules - The modules to register.
+   */
+  async registerModules(modules: (ModuleConstructor | NullishFalsy)[]): Promise<void> {
+    for (const Module of modules) {
+      if (!Module) continue;
+
       const moduleInstance = new Module(this.app);
+
+      await moduleInstance.init();
+
       this.registeredModules.push(moduleInstance);
       this.app.modules[Module.name] = moduleInstance;
-    });
+    }
   }
 
-  async registerPlugins(plugins: (PluginFn | PluginAsyncFn)[]): Promise<void> {
+  /**
+   * Should be called before middlewares are registered.
+   *
+   * @param plugins - The plugins to register.
+   */
+  async registerPlugins(plugins: (PluginFn | PluginAsyncFn | NullishFalsy)[]): Promise<void> {
     for (const plugin of plugins) {
+      if (!plugin) continue;
+
       this.registeredPlugins.push(plugin);
       await plugin(this.app);
     }
   }
 
+  /**
+   * Should be called before modules are registered.
+   *
+   * @param middlewares - The middlewares to register.
+   */
+  async registerMiddleware(middlewares: (MiddlewareFn | MiddlewareAsyncFn | NullishFalsy)[]): Promise<void> {
+    for (const middleware of middlewares) {
+      if (!middleware) continue;
+
+      this.registeredMiddleware.push(middleware);
+      await middleware(this.app);
+    }
+  }
+
+  /**
+   * Should be called after modules are registered.
+   *
+   * @param errorHandler - The error handler to register.
+   */
   registerErrorHandler(errorHandler: PluginFn | PluginAsyncFn): void {
     errorHandler(this.app);
   }
 
+  /**
+   * Should be called after modules are registered.
+   *
+   * @param pathNotFoundHandler - The path not found handler to register.
+   */
   registerPathNotFoundHandler(pathNotFoundHandler: PluginFn): void {
     pathNotFoundHandler(this.app);
   }
