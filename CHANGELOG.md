@@ -1,5 +1,11 @@
 # lucky-server
 
+## 3.0.1
+
+### Patch Changes
+
+- Relax ModuleFactory.init() return type to accept void in addition to Promise<void>
+
 ## 3.0.0
 
 ### Major Changes
